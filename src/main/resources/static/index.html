@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Business events</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.3/normalize.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.1.0/milligram.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.0.3/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.1.6/zepto.js"></script>
+    <style>
+        li {
+            list-style-type: none;
+        }
+    </style>
+    <script type="text/javascript">
+
+        var stompClient = null;
+
+        function connect() {
+            var socket = new SockJS('/subscribe');
+            stompClient = Stomp.over(socket);
+            stompClient.connect({}, function(frame) {
+
+                console.log('Connected: ' + frame);
+
+                stompClient.subscribe('/topic/events', function(event){
+                    console.log('New event' + event);
+                    var eventObj = JSON.parse(event.body);
+                    document.getElementById('events').innerHTML = '<li>' + toLine(eventObj) + '</li>' + document.getElementById('events').innerHTML;
+                });
+            });
+        }
+
+        function toLine(eventObj) {
+            var id = eventObj.id;
+            var message = eventObj.event;
+            var added = new Date(eventObj.added);
+            return '[' + id + '] <b>' + message + '</b><br />@ ' + added.getFullYear() + '-' + added.getMonth() + '-' + added.getDate();
+        }
+
+        function disconnect() {
+            if (stompClient != null) {
+                stompClient.disconnect();
+            }
+            console.log("Disconnected");
+        }
+
+        function reconnect() {
+            disconnect();
+            connect();
+        }
+
+        function showHistory() {
+            $.ajax({
+                type: 'GET',
+                url: '/event/',
+                success: function(data){
+                    var lines = data.events;
+                    document.getElementById('history').innerHTML = '';
+                    for(var i=0; i<lines.length; i++) {
+                        document.getElementById('history').innerHTML += '<li>' + toLine(lines[i]) + '</li>';
+                    }
+                },
+                error: function(xhr, type){
+                    console.log(xhr);
+                    console.log(typr);
+                }
+            });
+        }
+
+        function showInfo() {
+            $.ajax({
+                type: 'GET',
+                url: '/info/',
+                success: function(data){
+                    document.getElementById('info').innerHTML =
+                            '<b>Version: </b>' + data.version + '<br /><b>Created by: </b>' + data.createdBy + '';
+                },
+                error: function(xhr, type){
+                    console.log(xhr);
+                    console.log(typr);
+                }
+            });
+        }
+
+        disconnect();
+        connect();
+        showInfo();
+
+    </script>
+</head>
+<body>
+
+    <div class="container">
+
+        <div class="row">
+            <div id="eventsColumn" class="column">
+                <h2>Event stream</h2>
+                <a class="button" href="javascript:reconnect()">Reconnect</a>
+                <ul id="events">
+                </ul>
+            </div>
+            <div id="historyColumn" class="column">
+                <h2>History</h2>
+                <a class="button" href="javascript:showHistory()">Load history</a>
+                <ul id="history">
+                </ul>
+            </div>
+            <div id="infoColumn" class="column">
+                <h2>Info</h2>
+                <a class="button" href="javascript:showInfo()">Load info</a>
+                <ul id="info">
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
