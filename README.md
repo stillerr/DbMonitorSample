@@ -41,3 +41,9 @@ DbMonitorSample using Spring boot, web, integration, websocket
 ## About
 This is a simple database poller application with REST and websocket endpoints.
 It uses an in-memory database, so the data will be erased after shutdown.
+
+!!!
+In this form the application handles only the inserts of the BusinessEvents. (Time issues)
+Watching the update and delete operations should be implemented in the future.
+!!!
+
