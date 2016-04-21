@@ -17,6 +17,7 @@ public class IntegrationConfiguration {
     public static final String POLLER_SELECT = "SELECT * FROM BUSINESS_EVENTS" +
             " WHERE id > (SELECT MAX(id) FROM PROCESSED_BUSINESS_EVENTS) " +
             " OR (SELECT MAX(id) FROM PROCESSED_BUSINESS_EVENTS) IS NULL";
+    private static final long MIN_POLLER_PERIOD_MS = 2000;
 
     @Autowired
     private JpaBusinessEventListener businessEventListener;
@@ -31,8 +32,11 @@ public class IntegrationConfiguration {
 
     @Bean
     public IntegrationFlow jdbcFlow(MessageSource<?> jdbcAdapter) {
+
+        long interval = pollerPeriodMs > MIN_POLLER_PERIOD_MS ? pollerPeriodMs : MIN_POLLER_PERIOD_MS;
+
         return IntegrationFlows
-                .from(jdbcAdapter, e -> e.poller(p -> p.fixedRate(pollerPeriodMs)))
+                .from(jdbcAdapter, e -> e.poller(p -> p.fixedRate(interval)))
                 .handle(businessEventListener)
                 .get();
     }
