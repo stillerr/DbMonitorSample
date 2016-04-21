@@ -32,7 +32,7 @@ public class IntegrationConfiguration {
     @Bean
     public IntegrationFlow jdbcFlow(MessageSource<?> jdbcAdapter) {
         return IntegrationFlows
-                .from(jdbcAdapter, e -> e.poller(p -> p.fixedRate(3000)))
+                .from(jdbcAdapter, e -> e.poller(p -> p.fixedRate(pollerPeriodMs)))
                 .handle(businessEventListener)
                 .get();
     }
